@@ -1,0 +1,1 @@
+该文件夹下存放原始的json数据文件，文件下载地址`https://github.com/nuolade/disease-kb?tab=readme-ov-file`
