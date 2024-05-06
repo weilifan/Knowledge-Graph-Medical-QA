@@ -3,7 +3,7 @@ import torch
 import torch.nn as nn
 import os
 from sklearn.model_selection import train_test_split
-from torch.utils.data import Dataset,DataLoader
+from torch.utils.data import Dataset, DataLoader
 from seqeval.metrics import f1_score
 from tqdm import tqdm
 import random
@@ -11,7 +11,7 @@ import numpy as np
 
 
 def read_data(file):
-    with open(file,"r",encoding="utf-8") as f:
+    with open(file, "r", encoding="utf-8") as f:
         all_data = f.read().split("\n")
 
     all_text = []
@@ -37,15 +37,15 @@ def read_data(file):
     new_text = []
     new_label = []
 
-    for text,tag in zip(all_text,all_label):
+    for text, tag in zip(all_text, all_label):
         if tag.count("O") != len(tag):
             new_text.append(text)
             new_label.append(tag)
-    return new_text,new_label
+    return new_text, new_label
 
 
-def find_entities(text,tag_list):
-    result = [] # [ (0,2,食品") ,(4,10,"药品") ]
+def find_entities(text, tag_list):
+    result = []  # [ (0,2,食品") ,(4,10,"药品") ]
     b_idx = -1
     e_idx = -1
     type = ""
@@ -58,7 +58,7 @@ def find_entities(text,tag_list):
                 continue
             else:
                 e_idx = idx
-                result.append((b_idx,idx,text[b_idx:idx],type))
+                result.append((b_idx, idx, text[b_idx:idx], type))
 
                 b_idx = -1
                 e_idx = -1
@@ -70,22 +70,18 @@ def find_entities(text,tag_list):
 
                 if is_O == False:
                     e_idx = idx
-                    result.append((b_idx, idx,text[b_idx:idx], type))
+                    result.append((b_idx, idx, text[b_idx:idx], type))
 
                     b_idx = -1
                     e_idx = -1
                     type = ""
 
-
                 b_idx = idx
                 type = tag.strip("B-")
 
-
-
-
             is_O = False
     if b_idx != -1:
-        result.append((b_idx,idx+1,text[b_idx:idx+1],type))
+        result.append((b_idx, idx + 1, text[b_idx:idx + 1], type))
     return result
 
 
@@ -100,7 +96,7 @@ def check_tag(ents):
     return new_ents
 
 
-class Entity_Extend:
+class EntityExtend:
     def __init__(self):
         root_path = "../entity"
         files = os.listdir(root_path)
@@ -108,7 +104,7 @@ class Entity_Extend:
         for file in files:
             type_ = file.strip(".txt")
 
-            with open(os.path.join(root_path,file),encoding="utf-8") as f:
+            with open(os.path.join(root_path, file), encoding="utf-8") as f:
                 entities = f.read().split("\n")
             if type_ != "disease":
                 self.type_2_entites[type_] = entities
@@ -120,31 +116,31 @@ class Entity_Extend:
                         d_n.append(d['disease_name'])
                 self.type_2_entites[type_] = d_n
 
-    def entity_replace(self,entity,type):
+    def entity_replace(self, entity, type):
         entity = "".join(entity)
         while True:
             other_entity = random.choice(self.type_2_entites[type])
             if entity != other_entity:
 
                 new_entity = [i for i in other_entity]
-                new_tag =  ["B-"+type] + ["I-"+type]*(len(other_entity)-1)
+                new_tag = ["B-" + type] + ["I-" + type] * (len(other_entity) - 1)
 
                 try:
-                    assert len(new_entity) == len(new_tag),"entity_replace  长度不一致！"
+                    assert len(new_entity) == len(new_tag), "entity_replace  长度不一致！"
                 except:
                     print("entity_replace  长度不一致！")
 
-                return  new_entity,new_tag
+                return new_entity, new_tag
 
-    def entity_mask(self,entity,type):
-        if len(entity)<2:
-            return entity,["B-" + type] + ["I-" + type] * (len(entity) - 1)
+    def entity_mask(self, entity, type):
+        if len(entity) < 2:
+            return entity, ["B-" + type] + ["I-" + type] * (len(entity) - 1)
 
         new_entity = entity.copy()
 
-        if len(entity) <=5 :
-            new_entity.pop(random.randint(0,len(new_entity)-1))
-            new_tag = ["B-"+type] + ["I-"+type]*(len(new_entity)-1)
+        if len(entity) <= 5:
+            new_entity.pop(random.randint(0, len(new_entity) - 1))
+            new_tag = ["B-" + type] + ["I-" + type] * (len(new_entity) - 1)
 
         else:
 
@@ -154,60 +150,57 @@ class Entity_Extend:
             new_tag = ["B-" + type] + ["I-" + type] * (len(new_entity) - 1)
 
         try:
-            assert len(new_entity) == len(new_tag),"entity_mask 长度不一致"
+            assert len(new_entity) == len(new_tag), "entity_mask 长度不一致"
         except:
             print("entity_mask")
         return new_entity, new_tag
 
-    def entity_merge(self,entity,type):
-        join_word = ["和","与","还有","、"]
+    def entity_merge(self, entity, type):
+        join_word = ["和", "与", "还有", "、"]
         entity = "".join(entity)
         while True:
             other_entity = random.choice(self.type_2_entites[type])
             if entity != other_entity:
                 jw = random.choice(join_word)
                 new_entity = entity + jw + other_entity
-                new_tag = ["B-"+type] + ["I-"+type]*(len(entity)-1) + ["O"] * len(jw) + ["B-"+type] + ["I-"+type]*(len(other_entity)-1)
+                new_tag = ["B-" + type] + ["I-" + type] * (len(entity) - 1) + ["O"] * len(jw) + ["B-" + type] + [
+                    "I-" + type] * (len(other_entity) - 1)
 
                 try:
-                    assert len(new_entity) == len(new_tag),"entity_merge 长度不一致"
+                    assert len(new_entity) == len(new_tag), "entity_merge 长度不一致"
                 except:
                     print("entity_merge  长度不一致！")
-                return new_entity,new_tag
+                return new_entity, new_tag
 
-    def entites_extend(self,text,tag,ents):
+    def entites_extend(self, text, tag, ents):
         new_text = text.copy()
         new_tag = tag.copy()
 
         # 1. 实体替换
 
-        ps = [self.entity_merge,self.entity_replace,self.entity_replace]
+        ps = [self.entity_merge, self.entity_replace, self.entity_replace]
 
         sign = 0
         for ent in ents:
-
-
-
             p = random.choice(ps)
-            temp_ent,temp_tag = p(text[ent[0]:ent[1]],ent[-1])
+            temp_ent, temp_tag = p(text[ent[0]:ent[1]], ent[-1])
 
-            new_text[ent[0]+sign:ent[1]+sign] = temp_ent
-            new_tag[ent[0]+sign:ent[1]+sign] = temp_tag
+            new_text[ent[0] + sign:ent[1] + sign] = temp_ent
+            new_tag[ent[0] + sign:ent[1] + sign] = temp_tag
 
-            sign += (len(temp_tag)-(ent[1]-ent[0]))
+            sign += (len(temp_tag) - (ent[1] - ent[0]))
 
-
-        return  new_text,new_tag
+        return new_text, new_tag
 
 
 class NerDataset(Dataset):
-    def __init__(self,all_text,all_tag,tokenizer,max_len,tag_2_index,is_train=True):
+    def __init__(self, all_text, all_tag, tokenizer, max_len, tag_2_index, is_train=True):
         self.all_text = all_text
         self.all_tag = all_tag
         self.tokenizer = tokenizer
         self.max_len = max_len
         self.tag_2_index = tag_2_index
-        self.extend = Entity_Extend()
+        self.extend = EntityExtend()
         self.is_train = is_train
         print("")
 
@@ -218,66 +211,121 @@ class NerDataset(Dataset):
         if self.is_train == True:
             ents = find_entities(text, tag)
 
-            new_text,new_tag = self.extend.entites_extend(text,tag,ents)
+            new_text, new_tag = self.extend.entites_extend(text, tag, ents)
 
             if len(new_text) == len(new_tag):
                 text = new_text
                 tag = new_tag
 
-        text = text[:(max_len-2)]
-        tag = tag[:(max_len-2)]
+        text = text[:(max_len - 2)]
+        tag = tag[:(max_len - 2)]
 
         text_len = len(text)
 
-        text_idx = self.tokenizer.encode(text,padding="max_length",max_length=self.max_len,truncation=True)
-        tag_idx = [self.tag_2_index["<PAD>"]] +  [self.tag_2_index[i] for i in tag] + [self.tag_2_index["<PAD>"]]  + [self.tag_2_index["<PAD>"]]*(self.max_len-text_len-2)
+        text_idx = self.tokenizer.encode(text, padding="max_length", max_length=self.max_len, truncation=True)
+        tag_idx = [self.tag_2_index["<PAD>"]] + [self.tag_2_index[i] for i in tag] + [self.tag_2_index["<PAD>"]] + [
+            self.tag_2_index["<PAD>"]] * (self.max_len - text_len - 2)
 
         # try:
-        assert len(text_idx) == len(tag_idx) == self.max_len,"text和tag长度都不一样，Ner个求啊！"
+        assert len(text_idx) == len(tag_idx) == self.max_len, "text和tag长度都不一样，Ner个求啊！"
         # except e:
         #     return None
 
-        return torch.tensor(text_idx),torch.tensor(tag_idx),text_len
+        return torch.tensor(text_idx), torch.tensor(tag_idx), text_len
 
     def __len__(self):
         return len(self.all_text)
 
 
 def build_index2tag(all_tag):
-    tag_2_index = {"<PAD>":0}
+    tag_2_index = {"<PAD>": 0}
     for tags in all_tag:
         for tag in tags:
-            tag_2_index[tag] = tag_2_index.get(tag,len(tag_2_index))
-    return tag_2_index,list(tag_2_index)
+            tag_2_index[tag] = tag_2_index.get(tag, len(tag_2_index))
+    return tag_2_index, list(tag_2_index)
 
 
 class NerModel(nn.Module):
-    def __init__(self,lstm_hidden_num,tag_num):
+    def __init__(self, lstm_hidden_num, tag_num):
         super(NerModel, self).__init__()
         self.bert = BertModel.from_pretrained("bert-base-chinese")
-        for name,param in self.bert.named_parameters():
+        self.tokenizer = BertTokenizer.from_pretrained("bert-base-chinese")
+        for name, param in self.bert.named_parameters():
             # if pooler not in name:
-                param.requires_grad =  True
+            param.requires_grad = True
 
-            # if "7" in name:
-            #     param.requires_grad = True
+        # if "7" in name:
+        #     param.requires_grad = True
 
-        self.lstm = nn.LSTM(768,lstm_hidden_num,batch_first=True,bidirectional=False)
+        self.lstm = nn.LSTM(768, lstm_hidden_num, batch_first=True, bidirectional=False)
 
-        self.classifier = nn.Linear(lstm_hidden_num,tag_num)
+        self.classifier = nn.Linear(lstm_hidden_num, tag_num)
         self.loss_fun = nn.CrossEntropyLoss(ignore_index=0)
 
-    def forward(self,batch_text_idx,batch_tag_idx=None):
-        bert_out0,bert_out1 = self.bert(batch_text_idx,attention_mask=batch_text_idx>0,return_dict=False)
+    def forward(self, batch_text_idx, batch_tag_idx=None):
+        bert_out0, bert_out1 = self.bert(batch_text_idx, attention_mask=batch_text_idx > 0, return_dict=False)
 
-        lstm_out0,list_out1 = self.lstm(bert_out0)
-        pre  = self.classifier(lstm_out0)
+        lstm_out0, list_out1 = self.lstm(bert_out0)
+        pre = self.classifier(lstm_out0)
 
         if batch_tag_idx != None:
-            loss = self.loss_fun(pre.reshape(-1,pre.shape[-1]),batch_tag_idx.reshape(-1))
+            loss = self.loss_fun(pre.reshape(-1, pre.shape[-1]), batch_tag_idx.reshape(-1))
             return loss
         else:
-            return torch.argmax(pre,-1)
+            return torch.argmax(pre, -1)
+
+    def find_entities(self, input_text, index_2_tag, device):
+        input_text = input_text[:510]
+        input_idx = self.tokenizer.encode(input_text, padding="max_length", max_length=50, truncation=True,
+                                     return_tensors="pt")
+        input_idx = input_idx.to(device)
+        pre = self.forward(input_idx)
+        pre = pre.tolist()[0]
+        pre = [index_2_tag[i] for i in pre[1:len(input_text) + 1]]
+
+        result = []  # [ (0,2,食品") ,(4,10,"药品") ]
+
+        b_idx = 0
+        e_idx = 0
+        type = ""
+
+        is_O = True
+        for idx, tag in enumerate(pre):
+            if tag == "O":
+
+                if is_O == True:
+                    continue
+                else:
+                    e_idx = idx
+                    if type != "":
+                        result.append((b_idx, idx, input_text[b_idx:idx], type))
+
+                    b_idx = -1
+                    e_idx = -1
+                    type = ""
+                is_O = True
+            else:
+
+                if "B-" in tag:
+
+                    if is_O == False:
+                        e_idx = idx
+                        if type != "":
+                            result.append((b_idx, idx, input_text[b_idx:idx], type))
+
+                        b_idx = -1
+                        e_idx = -1
+                        type = ""
+
+                    b_idx = idx
+                    type = tag.strip("B-")
+
+                is_O = False
+        if b_idx != -1:
+            if type != "":
+                result.append((b_idx, idx + 1, input_text[b_idx:idx + 1], type))
+
+        return result
 
 
 def seed_torch(seed=24):
@@ -295,7 +343,7 @@ def seed_torch(seed=24):
 if __name__ == "__main__":
     seed_torch()
     all_text, all_tag = read_data("all_ner.txt")
-    train_text, dev_text, train_tag, dev_tag = train_test_split(all_text, all_tag, test_size = 0.18, random_state = 42)
+    train_text, dev_text, train_tag, dev_tag = train_test_split(all_text, all_tag, test_size=0.18, random_state=42)
 
     tag_2_index, index_2_tag = build_index2tag(all_tag)
 
@@ -311,10 +359,10 @@ if __name__ == "__main__":
 
     tokenizer = BertTokenizer.from_pretrained("bert-base-chinese")
 
-    train_dataset = NerDataset(train_text,train_tag,tokenizer,max_len,tag_2_index,True)
-    train_dataloader = DataLoader(train_dataset,batch_size,shuffle=False)
+    train_dataset = NerDataset(train_text, train_tag, tokenizer, max_len, tag_2_index, True)
+    train_dataloader = DataLoader(train_dataset, batch_size, shuffle=False)
 
-    dev_dataset = NerDataset(dev_text, dev_tag, tokenizer, max_len, tag_2_index,False)
+    dev_dataset = NerDataset(dev_text, dev_tag, tokenizer, max_len, tag_2_index, False)
     dev_dataloader = DataLoader(dev_dataset, batch_size, shuffle=False)
 
     model = NerModel(lstm_hidden_num, len(tag_2_index)).to(device)
@@ -337,15 +385,15 @@ if __name__ == "__main__":
 
         all_pre = []
         all_dev = []
-        for batch_text_idx,batch_tag_idx,batch_len in dev_dataloader:
+        for batch_text_idx, batch_tag_idx, batch_len in dev_dataloader:
             batch_text_idx = batch_text_idx.to(device)
             batch_tag_idx = batch_tag_idx.to(device)
             pre = model.forward(batch_text_idx)
 
-            for t, p, l in zip(batch_tag_idx,pre,batch_len):
+            for t, p, l in zip(batch_tag_idx, pre, batch_len):
                 l = int(l)
-                all_dev.append([index_2_tag[int(i)] for i in t[1:l+1]])
-                all_pre.append([index_2_tag[int(i)] for i in p[1:l+1]])
+                all_dev.append([index_2_tag[int(i)] for i in t[1:l + 1]])
+                all_pre.append([index_2_tag[int(i)] for i in p[1:l + 1]])
             break
 
         f1 = f1_score(all_dev, all_pre)
@@ -355,4 +403,3 @@ if __name__ == "__main__":
             torch.save(model, "best_model.pt")
 
         print(f"epoch:{e},f1:{f1:.4f}")
-
