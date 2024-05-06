@@ -1,0 +1,16 @@
+<PAD>
+O
+B-cure_way
+I-cure_way
+B-food
+I-food
+B-drug_manufacturers
+I-drug_manufacturers
+B-common_drug
+I-common_drug
+B-disease
+I-disease
+B-symptom
+I-symptom
+B-check
+I-check
