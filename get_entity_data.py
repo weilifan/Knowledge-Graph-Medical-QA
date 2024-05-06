@@ -1,13 +1,9 @@
 import re
 import os
 
-
 if __name__ == "__main__":
-    with open(os.path.join("data","medical.json"),encoding="utf-8") as f:
+    with open(os.path.join("data", "medical.json"), encoding="utf-8") as f:
         all_data = f.read().split("\n")
-
-    # client = py2neo.Graph("http://127.0.0.1:7474", user="neo4j", password="123456")
-    # client.run("match (n) detach delete (n)")
 
     all_entity = {
         "disease": [],  # 疾病
@@ -25,8 +21,8 @@ if __name__ == "__main__":
             continue
         data = eval(data)
 
-        disease_name = data.get("name","")
-        all_entity["disease"].append({                   # 添加 疾病实体
+        disease_name = data.get("name", "")
+        all_entity["disease"].append({  # 添加 疾病实体
             "disease_name": disease_name,
             "desc": data.get("desc", ""),
             "cause": data.get("cause", ""),
@@ -41,7 +37,7 @@ if __name__ == "__main__":
 
         do_eat = data.get("do_eat", [])
         rec_eat = data.get("recommand_eat", [])
-        not_eat = data.get("not_eat",[])
+        not_eat = data.get("not_eat", [])
         all_entity["food"].extend(do_eat + not_eat + rec_eat)  # 添加药品实体
 
         check = data.get("check", [])
@@ -59,7 +55,7 @@ if __name__ == "__main__":
         drug_detail = data.get("drug_detail", [])
         pattern = r"(.*?)\((.*?)\)"
         for drug_str in drug_detail:
-            dp = re.findall(pattern,drug_str)
+            dp = re.findall(pattern, drug_str)
             if len(dp) != 0:
                 pr, p = dp[0]
                 pr = pr.strip(p)
