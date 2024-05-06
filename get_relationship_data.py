@@ -1,9 +1,8 @@
 import re
 import os
 
-
 if __name__ == "__main__":
-    with open(os.path.join("data","medical.json"),encoding="utf-8") as f:
+    with open(os.path.join("data", "medical.json"), encoding="utf-8") as f:
         all_data = f.read().split("\n")
 
     all_relationship = []
@@ -13,15 +12,16 @@ if __name__ == "__main__":
             continue
         data = eval(data)
 
-        disease_name = data.get("name","")
+        disease_name = data.get("name", "")
 
         drugs = data.get("common_drug", []) + data.get("recommand_drug", [])
         if drugs:
-            all_relationship.extend([(disease_name, "disease", "recommend_drug", d, "common_drug") for d in drugs])  # 疾病使用药品
+            all_relationship.extend(
+                [(disease_name, "disease", "recommend_drug", d, "common_drug") for d in drugs])  # 疾病使用药品
 
         do_eat = data.get("do_eat", [])
         rec_eat = data.get("recommand_eat", [])
-        not_eat = data.get("not_eat",[])
+        not_eat = data.get("not_eat", [])
         if do_eat + rec_eat:
             all_relationship.extend([(disease_name, "disease", "do_eat", f, "food") for f in do_eat + rec_eat])
         if not_eat:
@@ -33,7 +33,7 @@ if __name__ == "__main__":
 
         cure_department = data.get("cure_department", [])
         if cure_department:
-            all_relationship.append((disease_name, "disease", "belong_to", cure_department[-1],"cure_department"))
+            all_relationship.append((disease_name, "disease", "belong_to", cure_department[-1], "cure_department"))
 
         sympom = data.get("symptom", [])
         if sympom:
@@ -50,7 +50,7 @@ if __name__ == "__main__":
         drug_detail = data.get("drug_detail", [])
         pattern = r"(.*?)\((.*?)\)"
         for drug_str in drug_detail:
-            dp = re.findall(pattern,drug_str)
+            dp = re.findall(pattern, drug_str)
             if len(dp) != 0:
                 pr, p = dp[0]
                 pr = pr.strip(p)
