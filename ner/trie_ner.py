@@ -7,7 +7,7 @@ class TrieNer:
         self.tag_2_entity = {}
         self.tag_2_tree = {}
 
-        root_path = os.path.join("..", "entity")
+        root_path = "entity"
         files = os.listdir(root_path)
         self.type_2_entites = {}
         for file in files:
