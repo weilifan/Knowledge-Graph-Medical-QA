@@ -1,0 +1,21 @@
+1. 功能
+    - XX症状可能是是患了什么病
+      - ![img](https://github.com/weilifan/neo4j_plotly_flask/blob/master/demo/demo1.gif)
+    - XX病应该吃什么药，XX病推荐吃什么，XX病如何治疗，为什么会得XX病，XX病如何预防，XX病治愈可能性是多少，XX病多久能治好
+      - ![img](https://github.com/weilifan/neo4j_plotly_flask/blob/master/demo/demo2.gif)
+    - XX药主治什么
+      - ![img](https://github.com/weilifan/neo4j_plotly_flask/blob/master/demo/demo3.gif)
+    - 如果有些问题无法被很好地回答，可对以下2处进行改进
+      - 该项目ner模型的训练数据`ner/all_ner.txt`使用工具标注和人工筛查
+      - 该项目的意图识别`question_classification.py`使用关键字匹配
+2. 部署和使用
+    - 安装`requirements.txt`中的所有依赖
+    - 将数据`medical.json`下载并存放到`data`文件夹下(文件下载地址`https://github.com/nuolade/disease-kb?tab=readme-ov-file`)
+    - 运行`get_entity_data.py`将会自动抽取原始数据`medical.json`中的所有实体并保存在`entity`文件夹下
+    - 运行`get_relationship_data.py`将会自动抽取原始数据`medical.json`中的所有关系并保存在`relationship`文件夹下
+    - 在服务器上安装并启动neo4j 图数据库（社区版）：`https://neo4j.com/download-center/#community`
+        - 以win10为例，可参考`https://zhuanlan.zhihu.com/p/183760372`
+    - 将该服务器的公网、以及neo4j的账号密码填写在`create_kg.py`中的`client = py2neo.Graph("http://127.0.0.1:7474", user="neo4j", password="123456")`，运行`create_kg.py`将节点和关系导入该数据库
+    - 下载`bert-base-chinese`权重文件(下载地址`https://huggingface.co/google-bert/bert-base-chinese`)并将他们放在`ner/bert-base-chinese`文件夹下，运行`ner/ner.py`训练得到一个命名实体识别模型，该模型将会被自动命名为`best_model.pt`并保存在`ner`文件夹下
+    - 运行`main.py`，点击运行后出现的链接
+    - 如果知识图谱已被创建，并且ner模型已存在，可以直接运行`main.py`，没有必要每次执行`create_kg.py`和`ner/ner.py`
